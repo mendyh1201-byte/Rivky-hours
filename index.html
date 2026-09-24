@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rivky — Converge Funding</title>
+  <style>
+    :root {
+      --ink: #1b2430;
+      --muted: #6d645b;
+      --paper: #f4efe6;
+      --card: #fffaf4;
+      --line: #eadfd3;
+      --rose: #9a3d2f;
+      --ok: #3f6b4e;
+      --gold: #c4a574;
+      --serif: "Iowan Old Style", Palatino, "Times New Roman", serif;
+      --sans: "Avenir Next", "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f4efe6; color: var(--ink); font-family: var(--sans); }
+    .shell { max-width: 980px; margin: 0 auto; padding: 28px 18px 80px; }
+    .eyebrow { letter-spacing: .16em; text-transform: uppercase; font-size: 11px; color: var(--gold); margin: 0 0 6px; }
+    h1 { font-family: var(--serif); font-weight: 500; font-size: 40px; margin: 0; }
+    .sub { color: var(--muted); margin: 8px 0 22px; }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+    .tab, button, .ghost { font: inherit; cursor: pointer; }
+    .tab { border: 0; background: #efe4d7; color: var(--muted); padding: 8px 14px; border-radius: 999px; }
+    .tab.on { background: var(--ink); color: #fffaf4; }
+    .panel { display: none; }
+    .panel.on { display: block; }
+    .hero, .card, .box, .table-wrap { background: var(--card); border: 1px solid var(--line); border-radius: 22px; }
+    .hero { padding: 22px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+    .hero h2 { font-family: var(--serif); font-weight: 500; margin: 6px 0; }
+    .muted, .hint, .tiny, .label { color: var(--muted); }
+    .punch { background: var(--rose); color: #fffaf4; border: 0; border-radius: 999px; padding: 14px 24px; }
+    .punch.out { background: var(--ok); }
+    .ghost { background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 12px 16px; }
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 14px 0; }
+    .card { padding: 16px; }
+    .card.accent { background: var(--ink); color: #f7efe6; }
+    .card.accent .label, .card.accent .hint { color: #d7c4b4; }
+    .label { margin: 0; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+    .num { font-family: var(--serif); font-size: 28px; margin: 8px 0 4px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: 14px; }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .box { padding: 18px; }
+    label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+    input, select { font: inherit; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+    .box button[type="submit"] { border: 0; background: var(--ink); color: #fffaf4; border-radius: 999px; padding: 10px 16px; }
+    .list { list-style: none; padding: 0; }
+    .list li { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); }
+    .linkish { background: none; border: 0; color: var(--rose); cursor: pointer; font: inherit; }
+    .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 12px; }
+    .cal b, .day { text-align: center; font-size: 12px; }
+    .day { border: 1px solid var(--line); border-radius: 12px; min-height: 64px; padding: 6px; background: #fff; }
+    .day.off { opacity: .4; }
+    .day.on { outline: 2px solid var(--rose); }
+    #toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 999px; }
+    @media (max-width: 800px) { .cards, .split { grid-template-columns: 1fr 1fr; } h1 { font-size: 32px; } }
+    @media (max-width: 560px) { .cards, .split { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <p class="eyebrow">Converge Funding</p>
+    <h1 id="greeting">Rivky's hours</h1>
+    <p class="sub" id="clockline">Punch in, hours, pay, bonuses, still owed.</p>
+    <div class="tabs">
+      <button class="tab on" data-tab="home">Today</button>
+      <button class="tab" data-tab="log">Timesheet</button>
+      <button class="tab" data-tab="money">Pay</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </div>
+    <section id="panel-home" class="panel on">
+      <div class="hero">
+        <div>
+          <p class="label" id="statusKicker">Ready</p>
+          <h2 id="statusTitle">Punch in when she starts</h2>
+          <p class="muted" id="statusDetail">Use Punch in, or Custom time for a shift later.</p>
+        </div>
+        <div>
+          <button id="punchBtn" class="punch">Punch in</button>
+          <button id="customBtn" class="ghost">Custom time</button>
+        </div>
+      </div>
+      <div class="cards">
+        <article class="card"><p class="label">Today</p><p class="num" id="todayHours">0.00</p><p class="hint">hours</p></article>
+        <article class="card"><p class="label">This week</p><p class="num" id="weekHours">0.00</p><p class="hint" id="weekRange">Sun–Sat</p></article>
+        <article class="card"><p class="label">This month</p><p class="num" id="monthPay">$0.00</p><p class="hint" id="monthLabel">earned</p></article>
+        <article class="card accent"><p class="label">Still owed</p><p class="num" id="owed">$0.00</p><p class="hint">earned minus paid</p></article>
+      </div>
+      <div class="box">
+        <h3 style="font-family:var(--serif);font-weight:500;margin:0 0 8px">Calendar</h3>
+        <div class="cal" id="calHead"></div>
+        <div class="cal" id="calDays"></div>
+      </div>
+    </section>
+    <section id="panel-log" class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>In</th><th>Out</th><th>Hours</th><th>Note</th><th></th></tr></thead>
+          <tbody id="shiftRows"></tbody>
+        </table>
+      </div>
+    </section>
+    <section id="panel-money" class="panel">
+      <div class="cards">
+        <article class="card"><p class="label">Week earned</p><p class="num" id="weekEarned">$0.00</p><p class="hint" id="weekPaidHint"></p></article>
+        <article class="card"><p class="label">Month earned</p><p class="num" id="monthEarned">$0.00</p><p class="hint" id="monthPaidHint"></p></article>
+        <article class="card accent"><p class="label">Owed</p><p class="num" id="owedBig">$0.00</p><p class="hint" id="allHint"></p></article>
+      </div>
+      <p><button id="takeOutBtn" class="punch">Take out what's owed</button></p>
+      <div class="split">
+        <form id="bonusForm" class="box">
+          <h3>Bonus</h3>
+          <label>Amount<input name="amount" type="number" step="0.01" required></label>
+          <label>Date<input name="paid_on" type="date"></label>
+          <label>Note<input name="note"></label>
+          <button type="submit">Add bonus</button>
+          <ul id="bonusList" class="list"></ul>
+        </form>
+        <form id="payForm" class="box">
+          <h3>Money taken out</h3>
+          <label>Amount<input name="amount" type="number" step="0.01" required></label>
+          <label>Date<input name="paid_on" type="date"></label>
+          <label>Note<input name="note"></label>
+          <button type="submit">Record</button>
+          <ul id="payList" class="list"></ul>
+        </form>
+      </div>
+    </section>
+    <section id="panel-settings" class="panel">
+      <form id="settingsForm" class="box">
+        <h3>Her setup</h3>
+        <label>Name<input name="her_name"></label>
+        <label>Hourly rate<input name="hourly_rate" type="number" step="0.01"></label>
+        <label>Currency<input name="currency" maxlength="4"></label>
+        <label>Overtime after<input name="overtime_after" type="number" step="0.5"></label>
+        <label>Overtime multiplier<input name="overtime_multiplier" type="number" step="0.1"></label>
+        <label>Week starts
+          <select name="week_starts">
+            <option value="0">Monday</option>
+            <option value="6">Sunday</option>
+          </select>
+        </label>
+        <button type="submit">Save settings</button>
+      </form>
+    </section>
+  </div>
+  <dialog id="customDialog">
+    <form id="customForm">
+      <h3>Custom punch</h3>
+      <label>Date<input name="date" type="date" required></label>
+      <label>Clock in<input name="clock_in" type="time" required></label>
+      <label>Clock out<input name="clock_out" type="time"></label>
+      <label>Note<input name="note"></label>
+      <button type="submit" class="punch">Save shift</button>
+      <button type="button" id="cancelCustom" class="ghost">Cancel</button>
+    </form>
+  </dialog>
+  <p id="toast" hidden></p>
+  <script>
+    const KEY = "rivky-converge-hours-v1";
+    const DEFAULTS = {
+      settings: { her_name: "Rivky", hourly_rate: "30", currency: "$", overtime_after: "40", overtime_multiplier: "1.5", week_starts: "6" },
+      shifts: [], bonuses: [], payments: []
+    };
+    const $ = (s) => document.querySelector(s);
+    let db = load();
+    function load() {
+      try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || "{}"), settings: { ...DEFAULTS.settings, ...(JSON.parse(localStorage.getItem(KEY) || "{}").settings || {}) } }; }
+      catch { return JSON.parse(JSON.stringify(DEFAULTS)); }
+    }
+    function save() { localStorage.setItem(KEY, JSON.stringify(db)); }
+    function money(n) {
+      const cur = db.settings.currency || "$";
+      const sign = n < 0 ? "-" : "";
+      return sign + cur + Math.abs(Number(n) || 0).toFixed(2);
+    }
+    function toast(msg) {
+      const el = $("#toast"); el.hidden = false; el.textContent = msg;
+      setTimeout(() => el.hidden = true, 2500);
+    }
+    function parseStamp(s) { return new Date(s.replace(" ", "T")); }
+    function fmt(d) {
+      const p = (n) => String(n).padStart(2, "0");
+      return d.getFullYear() + "-" + p(d.getMonth()+1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+    }
+    function hoursBetween(a, b) {
+      let start = +a, end = +b;
+      if (end < start) end += 86400000;
+      return Math.max(0, (end - start) / 3600000);
+    }
+    function weekStart(day) {
+      const ws = Number(db.settings.week_starts || 6);
+      const d = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+      const wd = d.getDay();
+      const delta = (ws === 6) ? wd : (wd + 6) % 7;
+      d.setDate(d.getDate() - delta);
+      return d;
+    }
+    function hoursIn(start, end, now) {
+      let total = 0;
+      for (const s of db.shifts) {
+        const a = parseStamp(s.clock_in);
+        const b = s.clock_out ? parseStamp(s.clock_out) : now;
+        const os = Math.max(+a, +start);
+        let oe = Math.min(+b < +a ? +b + 86400000 : +b, +end);
+        if (oe > os) total += (oe - os) / 3600000;
+      }
+      return total;
+    }
+    function payFor(hours) {
+      const rate = Number(db.settings.hourly_rate || 0);
+      const after = Number(db.settings.overtime_after || 40);
+      const mult = Number(db.settings.overtime_multiplier || 1.5);
+      const reg = Math.min(hours, after);
+      const ot = Math.max(0, hours - after);
+      return { hours, ot, earned: reg * rate + ot * rate * mult };
+    }
+    function sumMoney(rows, start, end) {
+      return rows.reduce((n, r) => {
+        const t = new Date(r.paid_on + "T12:00:00");
+        if (start && t < start) return n;
+        if (end && t >= end) return n;
+        return n + Number(r.amount || 0);
+      }, 0);
+    }
+    function openShift() { return db.shifts.find(s => !s.clock_out) || null; }
+    function summary() {
+      const now = new Date();
+      const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const ws = weekStart(now);
+      const we = new Date(ws); we.setDate(we.getDate() + 7);
+      const ms = new Date(now.getFullYear(), now.getMonth(), 1);
+      const weekH = hoursIn(ws, we, now);
+      const monthH = hoursIn(ms, new Date(now.getFullYear(), now.getMonth() + 1, 1), now);
+      const allH = hoursIn(new Date(2000,0,1), new Date(now.getTime()+86400000), now);
+      const week = payFor(weekH);
+      const month = payFor(monthH);
+      const all = payFor(allH);
+      const bAll = sumMoney(db.bonuses);
+      const pAll = sumMoney(db.payments);
+      return { now, todayH: hoursIn(today0, new Date(+today0+86400000), now), week, month, all, weekStart: ws, weekEnd: we, monthStart: ms, bonuses: bAll, paid: pAll, owed: all.earned + bAll - pAll };
+    }
+    function render() {
+      const s = summary();
+      const name = (db.settings.her_name || "Rivky").trim();
+      $("#greeting").textContent = name + "'s hours";
+      $("#clockline").textContent = s.now.toLocaleString([], { weekday: "long", hour: "numeric", minute: "2-digit" });
+      const open = openShift();
+      if (open) {
+        $("#statusKicker").textContent = "On the clock";
+        $("#statusTitle").textContent = "In since " + open.clock_in.slice(11);
+        $("#punchBtn").textContent = "Punch out";
+        $("#punchBtn").classList.add("out");
+      } else {
+        $("#statusKicker").textContent = "Ready";
+        $("#statusTitle").textContent = name + " can punch in";
+        $("#punchBtn").textContent = "Punch in";
+        $("#punchBtn").classList.remove("out");
+      }
+      $("#todayHours").textContent = s.todayH.toFixed(2);
+      $("#weekHours").textContent = s.week.hours.toFixed(2);
+      $("#owed").textContent = money(s.owed);
+      $("#monthPay").textContent = money(s.month.earned);
+      $("#monthLabel").textContent = s.monthStart.toLocaleString([], { month: "long", year: "numeric" });
+      $("#weekEarned").textContent = money(s.week.earned);
+      $("#monthEarned").textContent = money(s.month.earned);
+      $("#owedBig").textContent = money(s.owed);
+      $("#allHint").textContent = "earned " + money(s.all.earned + s.bonuses) + " · taken out " + money(s.paid);
+      $("#shiftRows").innerHTML = db.shifts.slice().reverse().map((row) => {
+        const hrs = hoursBetween(parseStamp(row.clock_in), row.clock_out ? parseStamp(row.clock_out) : s.now);
+        return "<tr><td>" + row.clock_in + "</td><td>" + (row.clock_out || "on the clock") + "</td><td>" + hrs.toFixed(2) + "</td><td>" + (row.note || "") + "</td><td><button class=\"linkish\" data-del-shift=\"" + row.id + "\">delete</button></td></tr>";
+      }).join("") || "<tr><td colspan=\"5\">No shifts yet.</td></tr>";
+      $("#bonusList").innerHTML = db.bonuses.map(r => "<li><span>" + r.paid_on + " · " + money(r.amount) + " · " + (r.note || "bonus") + "</span><button class=\"linkish\" data-del-bonus=\"" + r.id + "\">delete</button></li>").join("") || "<li>None yet</li>";
+      $("#payList").innerHTML = db.payments.map(r => "<li><span>" + r.paid_on + " · " + money(r.amount) + " · " + (r.note || "taken out") + "</span><button class=\"linkish\" data-del-pay=\"" + r.id + "\">delete</button></li>").join("") || "<li>None yet</li>";
+      const form = $("#settingsForm");
+      for (const k of Object.keys(db.settings)) if (form[k]) form[k].value = db.settings[k];
+      drawCal(s.now);
+    }
+    function drawCal(now) {
+      $("#calHead").innerHTML = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(x => "<b>" + x + "</b>").join("");
+      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      const start = new Date(first);
+      start.setDate(1 - first.getDay());
+      let html = "";
+      for (let i = 0; i < 42; i++) {
+        const d = new Date(start); d.setDate(start.getDate() + i);
+        const hrs = hoursIn(new Date(d.getFullYear(), d.getMonth(), d.getDate()), new Date(d.getFullYear(), d.getMonth(), d.getDate()+1), now);
+        const on = d.toDateString() === now.toDateString();
+        const off = d.getMonth() !== now.getMonth();
+        html += "<div class=\"day" + (off ? " off" : "") + (on ? " on" : "") + "\">" + d.getDate() + (hrs > 0 ? "<div class=\"tiny\">" + hrs.toFixed(1) + "h</div>" : "") + "</div>";
+      }
+      $("#calDays").innerHTML = html;
+    }
+    document.querySelectorAll(".tab").forEach(btn => btn.onclick = () => {
+      document.querySelectorAll(".tab").forEach(b => b.classList.toggle("on", b === btn));
+      document.querySelectorAll(".panel").forEach(p => p.classList.toggle("on", p.id === "panel-" + btn.dataset.tab));
+    });
+    $("#punchBtn").onclick = () => {
+      const open = openShift();
+      if (open) open.clock_out = fmt(new Date());
+      else db.shifts.push({ id: Date.now(), clock_in: fmt(new Date()), clock_out: null, note: "" });
+      save(); render(); toast(open ? "Punched out." : "Punched in.");
+    };
+    $("#customBtn").onclick = () => {
+      const d = new Date();
+      const f = $("#customForm");
+      f.date.value = d.toISOString().slice(0,10);
+      f.clock_in.value = String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
+      $("#customDialog").showModal();
+    };
+    $("#cancelCustom").onclick = () => $("#customDialog").close();
+    $("#customForm").onsubmit = (e) => {
+      e.preventDefault();
+      const f = e.target;
+      db.shifts.push({ id: Date.now(), clock_in: f.date.value + " " + f.clock_in.value, clock_out: f.clock_out.value ? f.date.value + " " + f.clock_out.value : null, note: f.note.value });
+      save(); render(); $("#customDialog").close(); toast("Custom shift saved.");
+    };
+    document.body.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.dataset.delShift) db.shifts = db.shifts.filter(s => String(s.id) !== t.dataset.delShift);
+      if (t.dataset.delBonus) db.bonuses = db.bonuses.filter(s => String(s.id) !== t.dataset.delBonus);
+      if (t.dataset.delPay) db.payments = db.payments.filter(s => String(s.id) !== t.dataset.delPay);
+      if (t.dataset.delShift || t.dataset.delBonus || t.dataset.delPay) { save(); render(); }
+    });
+    $("#bonusForm").onsubmit = (e) => {
+      e.preventDefault();
+      const f = e.target;
+      db.bonuses.unshift({ id: Date.now(), amount: f.amount.value, paid_on: f.paid_on.value || new Date().toISOString().slice(0,10), note: f.note.value });
+      f.reset(); save(); render(); toast("Bonus added.");
+    };
+    $("#payForm").onsubmit = (e) => {
+      e.preventDefault();
+      const f = e.target;
+      db.payments.unshift({ id: Date.now(), amount: f.amount.value, paid_on: f.paid_on.value || new Date().toISOString().slice(0,10), note: f.note.value });
+      f.reset(); save(); render(); toast("Taken out.");
+    };
+    $("#takeOutBtn").onclick = () => {
+      const s = summary();
+      if (s.owed <= 0) return toast("Nothing owed.");
+      db.payments.unshift({ id: Date.now(), amount: s.owed.toFixed(2), paid_on: new Date().toISOString().slice(0,10), note: "take out" });
+      save(); render(); toast("Recorded take-out.");
+    };
+    $("#settingsForm").onsubmit = (e) => {
+      e.preventDefault();
+      db.settings = Object.fromEntries(new FormData(e.target).entries());
+      save(); render(); toast("Settings saved.");
+    };
+    render();
+  </script>
+</body>
+</html>
